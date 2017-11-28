@@ -4,10 +4,15 @@ namespace App;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Zizaco\Entrust\Traits\EntrustUserTrait;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     use Notifiable;
+    use SoftDeletes {
+        SoftDeletes::restore insteadof EntrustUserTrait; }
+    use EntrustUserTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -16,6 +21,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name', 'email', 'password',
+        'first_login',
     ];
 
     /**
@@ -26,4 +32,16 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+    public function details()
+    {
+        if ($this->hasRole('prof')) {
+            return $this->hasOne('App\Professor', 'user_id')->withTrashed();
+        }
+    }
+
+    public function getRelatedInfo()
+    {
+        return $this->details()->first();
+    }
 }
